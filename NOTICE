@@ -1,0 +1,32 @@
+abot-realtime-map
+Copyright 2026 abot-realtime-map contributors.
+https://github.com/CaMi1le/abot-realtime-map
+
+This independent project integrates ABot-Recon. src/realtime_map/backend.py
+adapts the inference control flow of ABot-Recon's streaming network at commit
+6e3b2e1257464a74dfceff22eb33190bd228276e. Changes include explicit per-frame
+state management, yielding CPU observations, and resetting stream state rather
+than accumulating dense sequence outputs. The upstream checkout is not bundled.
+
+The upstream ABot-Recon NOTICE is retained verbatim below. Its references to
+third-party notices refer to the retained upstream notice files in
+licenses/ABot-Recon/. Our component and exception inventory is in the root
+THIRD_PARTY_NOTICES.md.
+
+--- Begin upstream ABot-Recon NOTICE ---
+ABot-Recon
+Copyright 2025 the authors
+Copyright 2026 ABot-Recon Authors
+
+This product includes software developed by the ABot-Recon authors and
+third-party components identified in THIRD_PARTY_NOTICES.md. Those components
+remain subject to their respective copyright notices and license terms.
+--- End upstream ABot-Recon NOTICE ---
+
+scripts/prepare-comparison.py includes an adaptation of MASt3R-SLAM's WindowMsg
+structure and headless build/runtime changes. That file is CC BY-NC-SA 4.0,
+with original attribution and a modification notice in its header. It is an
+optional external-baseline tool, not part of the realtime_map Python package.
+
+Model weights, datasets, and third-party components retain their own licenses.
+This NOTICE provides attribution and does not alter any license grant.

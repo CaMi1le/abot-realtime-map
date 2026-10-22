@@ -1,0 +1,662 @@
+{
+  "schema_version": 1,
+  "experiment_date": "2026-10-22",
+  "scope": "Historical aggregate measurements only. No raw frames, coordinates, poses, weights, or recordings are distributed. Source hashes identify local original reports, which are not included.",
+  "protocol": {
+    "model_input": "Monocular RGB only; no GT or calibration enters inference.",
+    "scale": "Uncalibrated during inference; trajectory quality uses global Sim(3).",
+    "loop": "Post-run only; each variant uses a separate global Sim(3).",
+    "browser_latency": "Scheduled arrival through returned browser-rendered image; includes return-network time. First 12 replay frames excluded from percentiles.",
+    "indoor_geometry": "Sampled valid-depth/confidence-filtered observations, not whole-scene completeness.",
+    "kitti_segment_scores": "After global scale alignment; not official metric-scale leaderboard scores.",
+    "hardware": "One GPU reported as RTX 4090; browser rendered on NVIDIA RTX PRO 1000.",
+    "model_resolution": [
+      504,
+      280
+    ],
+    "compute": "BF16, FlashInfer paged attention, cuRoPE"
+  },
+  "indoor": {
+    "desk": {
+      "quality": {
+        "associated_frames": 205,
+        "total_frames": 205,
+        "ate_rmse_m": 0.034122816541902405,
+        "ate_p95_m": 0.05073575289005926,
+        "ate_max_m": 0.06212041865610069,
+        "chamfer_mean_m": 0.036273290575469234,
+        "depth_rmse_m": 0.07460227608680725
+      }
+    },
+    "room": {
+      "quality": {
+        "associated_frames": 454,
+        "total_frames": 454,
+        "ate_rmse_m": 0.1009029616144924,
+        "ate_p95_m": 0.17174072157646278,
+        "ate_max_m": 0.19600108038486286,
+        "chamfer_mean_m": 0.05415527199678863,
+        "depth_rmse_m": 0.09000774472951889
+      },
+      "realtime_500k_preview": {
+        "completed": true,
+        "frames": 454,
+        "expected_frames": 454,
+        "wall_seconds": 45.534685999009525,
+        "target_fps": 10,
+        "model_ms": {
+          "mean": 53.62514299844925,
+          "p50": 53.05855099868495,
+          "p95": 55.30142630886985,
+          "max": 90.84336401429027
+        },
+        "processing_ms": {
+          "mean": 96.1829449091743,
+          "p50": 94.02037398831453,
+          "p95": 117.84177639347035,
+          "max": 248.97002399666235
+        },
+        "browser_latency_upper_bound_s": {
+          "mean": 0.3964440971035463,
+          "p50": 0.37416841024241876,
+          "p95": 0.7578929086390417,
+          "max": 0.8217441780434456
+        },
+        "browser_render_resolution": [
+          1280,
+          800
+        ],
+        "backlog_frames": {
+          "mean": 2.01642742156295,
+          "p50": 1.7681402788730338,
+          "p95": 5.596392062550876,
+          "max": 6.2319553006091155
+        },
+        "peak_gpu_mib": 7435.6171875,
+        "cpu_rss_mib": {
+          "mean": 1411.0529818297512,
+          "p50": 1412.43359375,
+          "p95": 1460.0,
+          "max": 1460.0
+        },
+        "realtime_pass": true
+      },
+      "realtime_1m_preview": {
+        "completed": true,
+        "frames": 454,
+        "expected_frames": 454,
+        "wall_seconds": 46.030905558000086,
+        "target_fps": 10,
+        "model_ms": {
+          "mean": 55.686304751929526,
+          "p50": 55.436755501432344,
+          "p95": 56.73465263971593,
+          "max": 80.12258299277164
+        },
+        "processing_ms": {
+          "mean": 98.99199137242134,
+          "p50": 97.58597398467828,
+          "p95": 119.3297359495773,
+          "max": 493.920064996928
+        },
+        "browser_latency_upper_bound_s": {
+          "mean": 0.6297981458249511,
+          "p50": 0.7184811163024278,
+          "p95": 1.077558859164128,
+          "max": 1.1324206875870004
+        },
+        "browser_render_resolution": [
+          1280,
+          800
+        ],
+        "backlog_frames": {
+          "mean": 4.310310476436385,
+          "p50": 5.2021201491879765,
+          "p95": 8.788110011591925,
+          "max": 9.341200326161925
+        },
+        "peak_gpu_mib": 7435.6171875,
+        "cpu_rss_mib": {
+          "mean": 1490.7249893947965,
+          "p50": 1520.9921875,
+          "p95": 1552.9921875,
+          "max": 1552.9921875
+        },
+        "realtime_pass": false
+      },
+      "offline_loop": {
+        "num_loop_edges": 1,
+        "total_sec": 9.664368747995468,
+        "gpu_pgo_last_pcg_converged": false,
+        "gpu_pgo_last_pcg_termination": "invalid_recurrence",
+        "gpu_pgo_last_pcg_relative_residual": 0.012244848088790877
+      },
+      "loop_quality": {
+        "associated_frames": 454,
+        "total_frames": 454,
+        "ate_rmse_m": 0.10090370203672977,
+        "ate_p95_m": 0.1717404875469551,
+        "ate_max_m": 0.1960008344353943,
+        "chamfer_mean_m": 0.054155675453988514,
+        "depth_rmse_m": 0.09000745415687561
+      },
+      "shared_keyframe_comparison": {
+        "protocol": "Same matched MASt3R keyframe timestamps; independent global Sim(3) for each trajectory; no GT enters either inference.",
+        "matched_keyframes": 50,
+        "abot_input_frames": 454,
+        "abot": {
+          "ate_rmse_m": 0.09863272018015325,
+          "alignment_scale": 2.8656478592316277
+        },
+        "mast3r": {
+          "ate_rmse_m": 0.12017398017286286,
+          "alignment_scale": 0.9155196900275772
+        }
+      }
+    },
+    "walking": {
+      "quality": {
+        "associated_frames": 288,
+        "total_frames": 289,
+        "ate_rmse_m": 0.04230298427144856,
+        "ate_p95_m": 0.06865586153992113,
+        "ate_max_m": 0.07814210182513476,
+        "chamfer_mean_m": 0.1740616588299954,
+        "depth_rmse_m": 0.5293710231781006
+      }
+    }
+  },
+  "driving": {
+    "05": {
+      "realtime": {
+        "completed": true,
+        "frames": 2761,
+        "expected_frames": 2761,
+        "wall_seconds": 287.77888883301057,
+        "target_fps": 10,
+        "model_ms": {
+          "mean": 54.11535734750109,
+          "p50": 53.51858900394291,
+          "p95": 56.540154200047255,
+          "max": 110.91336197569035
+        },
+        "processing_ms": {
+          "mean": 89.71955020907419,
+          "p50": 84.32674000505358,
+          "p95": 110.56448561139405,
+          "max": 279.6366940019652
+        },
+        "browser_latency_upper_bound_s": {
+          "mean": 0.30196767367216176,
+          "p50": 0.18967510998481885,
+          "p95": 1.2684384666034008,
+          "max": 2.2411888229835313
+        },
+        "browser_render_resolution": [
+          960,
+          600
+        ],
+        "backlog_frames": {
+          "mean": 1.072922466542386,
+          "p50": 0.0006276058719633473,
+          "p95": 10.187434332737848,
+          "max": 19.526496324266777
+        },
+        "peak_gpu_mib": 7437.65380859375,
+        "cpu_rss_mib": {
+          "mean": 1386.4623073162968,
+          "p50": 1388.1328125,
+          "p95": 1391.1328125,
+          "max": 1391.1328125
+        },
+        "realtime_pass": false,
+        "source_fps": 9.598764680719352,
+        "native_cadence_realtime_pass": false,
+        "archived_map_chunks": 28
+      },
+      "quality": {
+        "frames": 2761,
+        "gt_route_length_m": 2205.5703489841335,
+        "source_duration_seconds": 287.537,
+        "ate_rmse_m": 13.5340562274652,
+        "ate_p95_m": 26.759470051547773,
+        "ate_max_m": 36.091753331783735,
+        "segment_translation_percent": 3.4993151871757373,
+        "segment_rotation_deg_per_100m": 0.822125841703378,
+        "final_position_error_m": 36.091753331783735
+      },
+      "loop_quality": {
+        "frames": 2761,
+        "gt_route_length_m": 2205.5703489841335,
+        "source_duration_seconds": 287.537,
+        "ate_rmse_m": 5.98908085083575,
+        "ate_p95_m": 9.286253909577146,
+        "ate_max_m": 11.983151545530376,
+        "segment_translation_percent": 2.2766643753500144,
+        "segment_rotation_deg_per_100m": 0.77348376258122,
+        "final_position_error_m": 6.747885418378621
+      },
+      "offline_loop": {
+        "num_loop_edges": 11,
+        "total_sec": 57.754703894024715,
+        "gpu_pgo_last_pcg_converged": false,
+        "gpu_pgo_last_pcg_termination": "max_iterations",
+        "gpu_pgo_last_pcg_relative_residual": 0.008484085405071383
+      },
+      "diagnosis": {
+        "protocol": "Read-only diagnosis; GT used only for evaluation. Each trajectory uses its saved global Sim(3). Pair error compares inv(destination) @ source with the GT relative pose; GT separation is not assumed zero.",
+        "scope": "Only detected loop pairs; no claim about all true revisits or retrieval recall.",
+        "frames": 2761,
+        "detected_loop_pairs": 11,
+        "summary": {
+          "raw": {
+            "ate_rmse_m": 13.5340562274652,
+            "max_position_error_m": 36.091753331783735,
+            "max_error_frame": 2760,
+            "max_error_route_distance_m": 2205.5703489841367,
+            "max_error_time_s": 287.537,
+            "detected_pairs_translation_median_m": 11.75423507072266,
+            "detected_pairs_translation_max_m": 36.746953678553055
+          },
+          "offline_loop": {
+            "ate_rmse_m": 5.98908085083575,
+            "max_position_error_m": 11.983151545530376,
+            "max_error_frame": 35,
+            "max_error_route_distance_m": 25.819427778596612,
+            "max_error_time_s": 3.648605,
+            "detected_pairs_translation_median_m": 3.0089794926795155,
+            "detected_pairs_translation_max_m": 5.2525487292942845
+          }
+        },
+        "last_pcg_converged": false,
+        "last_pcg_termination": "max_iterations",
+        "last_pcg_relative_residual": 0.008484085405071383
+      }
+    },
+    "02": {
+      "realtime": {
+        "completed": true,
+        "frames": 4661,
+        "expected_frames": 4661,
+        "wall_seconds": 483.6077252550167,
+        "target_fps": 10,
+        "model_ms": {
+          "mean": 53.31029064189604,
+          "p50": 53.192995983408764,
+          "p95": 54.461595200700685,
+          "max": 94.92903601494618
+        },
+        "processing_ms": {
+          "mean": 90.6990336876231,
+          "p50": 87.06417598295957,
+          "p95": 111.56636758823878,
+          "max": 231.67788799037226
+        },
+        "browser_latency_upper_bound_s": {
+          "mean": 0.21255538278412162,
+          "p50": 0.1928407239902299,
+          "p95": 0.3099866364209441,
+          "max": 0.9928128700121306
+        },
+        "browser_render_resolution": [
+          960,
+          600
+        ],
+        "backlog_frames": {
+          "mean": 0.20576236171040763,
+          "p50": 0.0006320580213696606,
+          "p95": 1.0017972233798333,
+          "max": 7.58623288926348
+        },
+        "peak_gpu_mib": 7443.666015625,
+        "cpu_rss_mib": {
+          "mean": 1395.4317527963003,
+          "p50": 1398.546875,
+          "p95": 1402.546875,
+          "max": 1404.546875
+        },
+        "realtime_pass": false,
+        "source_fps": 9.64252510832839,
+        "native_cadence_realtime_pass": true,
+        "archived_map_chunks": 47
+      },
+      "quality": {
+        "frames": 4661,
+        "gt_route_length_m": 5067.554539621677,
+        "source_duration_seconds": 483.2759,
+        "ate_rmse_m": 70.40018785313569,
+        "ate_p95_m": 114.74937467454254,
+        "ate_max_m": 129.2763425298273,
+        "segment_translation_percent": 7.135521187862601,
+        "segment_rotation_deg_per_100m": 1.4578033041850242,
+        "final_position_error_m": 53.68853783152537
+      },
+      "loop_quality": {
+        "frames": 4661,
+        "gt_route_length_m": 5067.554539621677,
+        "source_duration_seconds": 483.2759,
+        "ate_rmse_m": 38.97110841589036,
+        "ate_p95_m": 73.87852629968133,
+        "ate_max_m": 85.08784909914083,
+        "segment_translation_percent": 6.299478648174753,
+        "segment_rotation_deg_per_100m": 1.3845769221805329,
+        "final_position_error_m": 49.2468610113553
+      },
+      "offline_loop": {
+        "num_loop_edges": 8,
+        "total_sec": 81.3084938969987,
+        "gpu_pgo_last_pcg_converged": false,
+        "gpu_pgo_last_pcg_termination": "max_iterations",
+        "gpu_pgo_last_pcg_relative_residual": 0.15809428434786238
+      },
+      "diagnosis": {
+        "protocol": "Read-only diagnosis; GT used only for evaluation. Each trajectory uses its saved global Sim(3). Pair error compares inv(destination) @ source with the GT relative pose; GT separation is not assumed zero.",
+        "scope": "Only detected loop pairs; no claim about all true revisits or retrieval recall.",
+        "frames": 4661,
+        "detected_loop_pairs": 8,
+        "summary": {
+          "raw": {
+            "ate_rmse_m": 70.40018785313569,
+            "max_position_error_m": 129.2763425298273,
+            "max_error_frame": 2650,
+            "max_error_route_distance_m": 2808.4228023712694,
+            "max_error_time_s": 274.8143,
+            "detected_pairs_translation_median_m": 45.88374722151121,
+            "detected_pairs_translation_max_m": 122.02517656016002
+          },
+          "offline_loop": {
+            "ate_rmse_m": 38.97110841589036,
+            "max_position_error_m": 85.08784909914083,
+            "max_error_frame": 2645,
+            "max_error_route_distance_m": 2805.170690852023,
+            "max_error_time_s": 274.2941,
+            "detected_pairs_translation_median_m": 5.316648348518996,
+            "detected_pairs_translation_max_m": 9.928598062499399
+          }
+        },
+        "last_pcg_converged": false,
+        "last_pcg_termination": "max_iterations",
+        "last_pcg_relative_residual": 0.15809428434786238
+      }
+    }
+  },
+  "source_reports": {
+    "artifacts/desk/evaluation.json": {
+      "sha256": "be840ef6b08ca7deb96223d8c9853a0916b85801873fc52da7fbf6bebde9d9e8",
+      "included_fields": [
+        "associated_frames",
+        "total_frames",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "chamfer_mean_m",
+        "depth_rmse_m"
+      ]
+    },
+    "artifacts/room/evaluation.json": {
+      "sha256": "4083017587cbd28652155c8afbe539de23b879a727bb707b7efa7a180682da22",
+      "included_fields": [
+        "associated_frames",
+        "total_frames",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "chamfer_mean_m",
+        "depth_rmse_m"
+      ]
+    },
+    "artifacts/walking/evaluation.json": {
+      "sha256": "74405c325e3abb0cbb11719280d66d2df5ad529e6ef4e738e1ca765949886bab",
+      "included_fields": [
+        "associated_frames",
+        "total_frames",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "chamfer_mean_m",
+        "depth_rmse_m"
+      ]
+    },
+    "artifacts/room-preview500k/report.json": {
+      "sha256": "619125c9f10b88d9a3b19a373fe6a44e5ca266f9702a19103e24fedc9427e925",
+      "included_fields": [
+        "completed",
+        "frames",
+        "expected_frames",
+        "wall_seconds",
+        "target_fps",
+        "model_ms",
+        "processing_ms",
+        "browser_latency_upper_bound_s",
+        "browser_render_resolution",
+        "backlog_frames",
+        "peak_gpu_mib",
+        "cpu_rss_mib",
+        "realtime_pass"
+      ]
+    },
+    "artifacts/room-demo/report.json": {
+      "sha256": "5564170a6fb7f3bd506b9de228d8bd68efb32af8336e945ea66edffaf61491c5",
+      "included_fields": [
+        "completed",
+        "frames",
+        "expected_frames",
+        "wall_seconds",
+        "target_fps",
+        "model_ms",
+        "processing_ms",
+        "browser_latency_upper_bound_s",
+        "browser_render_resolution",
+        "backlog_frames",
+        "peak_gpu_mib",
+        "cpu_rss_mib",
+        "realtime_pass"
+      ]
+    },
+    "artifacts/room/loop/loop_info.json": {
+      "sha256": "b2c6a860649c9cb5ebf6efe36febd6705c373c60be5f609268d7cde64a9243ac",
+      "included_fields": [
+        "num_loop_edges",
+        "total_sec",
+        "gpu_pgo_last_pcg_converged",
+        "gpu_pgo_last_pcg_termination",
+        "gpu_pgo_last_pcg_relative_residual"
+      ]
+    },
+    "artifacts/room/evaluation-loop.json": {
+      "sha256": "438296c9c6769fbbd00d972781cab116de0a6708c522e27edf0e4924f6801935",
+      "included_fields": [
+        "associated_frames",
+        "total_frames",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "chamfer_mean_m",
+        "depth_rmse_m"
+      ]
+    },
+    "artifacts/room/comparison.json": {
+      "sha256": "acc1bf6a44a8bd6cc787263958b36a0214b890bb68c2568a2cc95b2a0176824d",
+      "included_fields": [
+        "protocol",
+        "matched_keyframes",
+        "abot_input_frames",
+        "abot",
+        "mast3r"
+      ]
+    },
+    "artifacts/stress/memory-report.json": {
+      "sha256": "5d9c64f824adcdde8152bc4ee1a5877e74c466d411fc521f02bc8197a22d5294",
+      "included_fields": [
+        "purpose",
+        "completed",
+        "frames",
+        "wall_seconds",
+        "gpu_allocated_min_mib_after_100",
+        "gpu_allocated_max_mib_after_100",
+        "gpu_last_100_minus_first_100_mib",
+        "cpu_rss_max_mib_after_100",
+        "max_preview_points",
+        "dense_archival_enabled",
+        "browser_measured"
+      ]
+    },
+    "artifacts/driving/kitti05-final/report.json": {
+      "sha256": "cb7bc5c6d5c7ef21a7666ff11202b7e88477bfc8210d117c20c859bb57318e18",
+      "included_fields": [
+        "completed",
+        "frames",
+        "expected_frames",
+        "wall_seconds",
+        "target_fps",
+        "model_ms",
+        "processing_ms",
+        "browser_latency_upper_bound_s",
+        "browser_render_resolution",
+        "backlog_frames",
+        "peak_gpu_mib",
+        "cpu_rss_mib",
+        "realtime_pass",
+        "source_fps",
+        "native_cadence_realtime_pass",
+        "archived_map_chunks"
+      ]
+    },
+    "artifacts/driving/kitti05-final/evaluation.json": {
+      "sha256": "cf4d90120b18cf6d8671c42c4e3e4b8809332a865e17a818accd368562470b69",
+      "included_fields": [
+        "frames",
+        "gt_route_length_m",
+        "source_duration_seconds",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "segment_translation_percent",
+        "segment_rotation_deg_per_100m",
+        "final_position_error_m"
+      ]
+    },
+    "artifacts/driving/kitti05-final/evaluation-loop.json": {
+      "sha256": "b3b1e214ce341d5978080135b864da8caf4c8713acee5f8f90a0b0f4808b32ed",
+      "included_fields": [
+        "frames",
+        "gt_route_length_m",
+        "source_duration_seconds",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "segment_translation_percent",
+        "segment_rotation_deg_per_100m",
+        "final_position_error_m"
+      ]
+    },
+    "artifacts/driving/kitti05-final/loop/loop_info.json": {
+      "sha256": "7730bfb78b4d9b8977e2443b04b526ab7e7486ddb260acab4827ae69b90a87a9",
+      "included_fields": [
+        "num_loop_edges",
+        "total_sec",
+        "gpu_pgo_last_pcg_converged",
+        "gpu_pgo_last_pcg_termination",
+        "gpu_pgo_last_pcg_relative_residual"
+      ]
+    },
+    "artifacts/driving/kitti05-final/loop-diagnosis.json": {
+      "sha256": "480e50505c2256153feabc0c18dc2b0c21b2033e07c2615fa96c56a3ff228235",
+      "included_fields": [
+        "protocol",
+        "scope",
+        "frames",
+        "detected_loop_pairs",
+        "summary",
+        "last_pcg_converged",
+        "last_pcg_termination",
+        "last_pcg_relative_residual"
+      ]
+    },
+    "artifacts/driving/kitti02-final/report.json": {
+      "sha256": "0bbf01b1570d1c93cfc93b9856c0d68cef4f2618fd1b78e302018d46350804dc",
+      "included_fields": [
+        "completed",
+        "frames",
+        "expected_frames",
+        "wall_seconds",
+        "target_fps",
+        "model_ms",
+        "processing_ms",
+        "browser_latency_upper_bound_s",
+        "browser_render_resolution",
+        "backlog_frames",
+        "peak_gpu_mib",
+        "cpu_rss_mib",
+        "realtime_pass",
+        "source_fps",
+        "native_cadence_realtime_pass",
+        "archived_map_chunks"
+      ]
+    },
+    "artifacts/driving/kitti02-final/evaluation.json": {
+      "sha256": "f2c86241a7886eb73d6eabd67ae996acdedf63331269f81aee3911feeeeb032a",
+      "included_fields": [
+        "frames",
+        "gt_route_length_m",
+        "source_duration_seconds",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "segment_translation_percent",
+        "segment_rotation_deg_per_100m",
+        "final_position_error_m"
+      ]
+    },
+    "artifacts/driving/kitti02-final/evaluation-loop.json": {
+      "sha256": "fea136069c6f3631ff043a9fc6e652212657c49581b7a36563f200511e9bb04d",
+      "included_fields": [
+        "frames",
+        "gt_route_length_m",
+        "source_duration_seconds",
+        "ate_rmse_m",
+        "ate_p95_m",
+        "ate_max_m",
+        "segment_translation_percent",
+        "segment_rotation_deg_per_100m",
+        "final_position_error_m"
+      ]
+    },
+    "artifacts/driving/kitti02-final/loop/loop_info.json": {
+      "sha256": "78720daa426a0f133a4a1929d697efc41a6fc084fbe75a48f3f6a61ddf59d972",
+      "included_fields": [
+        "num_loop_edges",
+        "total_sec",
+        "gpu_pgo_last_pcg_converged",
+        "gpu_pgo_last_pcg_termination",
+        "gpu_pgo_last_pcg_relative_residual"
+      ]
+    },
+    "artifacts/driving/kitti02-final/loop-diagnosis.json": {
+      "sha256": "c6d267ce26f173c845cd7d1e3c62e001ad247e9814b5f678ddb13af77c5a3c02",
+      "included_fields": [
+        "protocol",
+        "scope",
+        "frames",
+        "detected_loop_pairs",
+        "summary",
+        "last_pcg_converged",
+        "last_pcg_termination",
+        "last_pcg_relative_residual"
+      ]
+    }
+  },
+  "memory_repeat": {
+    "purpose": "600-second synthetic repeated RGB memory test; not long-route geometric accuracy",
+    "completed": true,
+    "frames": 5999,
+    "wall_seconds": 600.0342115679814,
+    "gpu_allocated_min_mib_after_100": 5478.5517578125,
+    "gpu_allocated_max_mib_after_100": 5489.09228515625,
+    "gpu_last_100_minus_first_100_mib": -0.01151367187503638,
+    "cpu_rss_max_mib_after_100": 1414.0078125,
+    "max_preview_points": 999719,
+    "dense_archival_enabled": false,
+    "browser_measured": false
+  }
+}

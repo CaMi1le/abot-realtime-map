@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "abot-realtime-map"
+version = "0.1.0"
+description = "Measured, incremental monocular indoor and driving mapping with ABot-Recon"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_NOTICES.md", "licenses/**/*"]
+requires-python = ">=3.12"
+dependencies = ["numpy==1.26.4", "scipy", "pillow", "viser==1.1.1", "opencv-python==4.11.0.86", "psutil", "imageio[ffmpeg]", "pytest"]
+
+[project.optional-dependencies]
+analysis = ["matplotlib==3.10.8"]
+
+[project.urls]
+Repository = "https://github.com/CaMi1le/abot-realtime-map"
+Issues = "https://github.com/CaMi1le/abot-realtime-map/issues"
+
+[project.scripts]
+realtime-map = "realtime_map.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
