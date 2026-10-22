@@ -6,6 +6,12 @@ This is an independent research project built on AMAP CV Lab's ABot-Recon. The u
 
 > **License scope:** project code is Apache-2.0 except where a file states otherwise. **ABot-Recon weights are CC BY-NC 4.0.** Optional cuRoPE and MASt3R-SLAM components have additional non-commercial/share-alike terms. The code license does **not** grant commercial rights to these weights or components. Read [Licensing](#licensing) and [third-party notices](THIRD_PARTY_NOTICES.md) before use.
 
+## Project decision: research use only
+
+Recorded on 2026-10-22: the current checkpoint's non-commercial terms are a blocker to adopting this pipeline as the default foundation for a commercial product. Keep this repository as a non-commercial research prototype and evaluation reference.
+
+Reconsider product adoption only after obtaining the required written authorization from all relevant rights holders, or validating an alternative whose weights and required components permit the intended use. For future model selection, check **code, weight, and dependency licenses before investing in integration and benchmarking**. The permissive license of the application code alone is insufficient.
+
 ## What it does
 
 - Replays monocular RGB at source timestamps without dropping selected frames to hide backlog.
