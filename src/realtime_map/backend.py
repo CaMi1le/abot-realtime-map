@@ -7,6 +7,7 @@ Adaptation: explicit per-frame state and CPU outputs instead of accumulated
 sequence outputs. See NOTICE for upstream attribution and the pinned revision.
 """
 from dataclasses import dataclass
+from contextlib import nullcontext
 import time
 import numpy as np
 from PIL import Image
@@ -23,19 +24,30 @@ class FrameResult:
     valid_rows: slice
     model_ms: float
     preprocess_ms: float
+    occ_predict_ms: float = 0.0
+    occ_project_ms: float = 0.0
 
 
 class ABotStream:
-    def __init__(self, checkpoint, attention="sdpa", device="cuda", max_frames=22000):
+    def __init__(self, checkpoint, attention="sdpa", device="cuda", max_frames=22000,
+                 occ_runtime=None):
+        if occ_runtime is not None:
+            occ_runtime.validate_abot_checkpoint(checkpoint)
         import torch
         from abot_recon import ABotRecon
         torch.set_num_threads(4)
         self.torch = torch
         self.api = ABotRecon.from_pretrained(checkpoint, device=device,
-            attention_backend=attention, loop_closure=False, max_frames=max_frames)
+            attention_backend=attention, loop_closure=False, max_frames=max_frames,
+            amp_dtype='bf16' if device.startswith('cuda') else 'fp32')
         self.wrapper = self.api.model
         self.network = self.wrapper.network
         self.device = device
+        self.occ_runtime = occ_runtime
+        self.conditioner = None
+        if occ_runtime is not None:
+            from .occ_fusion import EncoderConditioner
+            self.conditioner = EncoderConditioner(self.network.encoder, occ_runtime.adapter)
         self.reset()
 
     def reset(self):
@@ -43,6 +55,14 @@ class ABotStream:
         self.carry = self.ref_h = self.camera_state = self.geometry = None
         self.index = 0
         self.paged = None
+        if self.conditioner is not None:
+            self.conditioner.pending = None
+
+    def close(self):
+        self.reset()
+        if self.conditioner is not None:
+            self.conditioner.close()
+            self.conditioner = None
 
     def infer_stream(self, frames):
         self.reset()
@@ -79,10 +99,15 @@ class ABotStream:
                 self.network._ensure_paged_manager(H=tensor.shape[-2], W=tensor.shape[-1],
                                                   dtype=tensor.dtype, device=tensor.device)
         if self.device.startswith("cuda"):
-            torch.cuda.synchronize()
+            torch.cuda.synchronize(self.device)
         pre_ms = (time.perf_counter() - start) * 1000
+        hints = None
+        occ_times = {"occ_predict_ms": 0., "occ_project_ms": 0.}
+        if self.occ_runtime is not None:
+            hints, occ_times = self.occ_runtime.prepare(frame, transform)
         start = time.perf_counter()
-        with torch.autocast("cuda" if self.device.startswith("cuda") else "cpu",
+        scope = self.conditioner.condition(hints) if self.conditioner else nullcontext()
+        with scope, torch.autocast("cuda" if self.device.startswith("cuda") else "cpu",
                             dtype=self.wrapper.compute_dtype,
                             enabled=self.device.startswith("cuda")):
             if self.paged:
@@ -101,7 +126,7 @@ class ABotStream:
             self.ref_h = pred["ref_hidden"]
         self.camera_state = pred.get("camera_state", self.camera_state)
         if self.device.startswith("cuda"):
-            torch.cuda.synchronize()
+            torch.cuda.synchronize(self.device)
         model_ms = (time.perf_counter() - start) * 1000
         pose = pred["camera_poses"][0, 0].float().cpu().numpy()
         points = pred["local_points"][0, 0].float().cpu().numpy()
@@ -109,4 +134,4 @@ class ABotStream:
         self.index += 1
         # Returning only CPU arrays releases dense CUDA outputs each frame.
         return FrameResult(frame.frame_id, frame.timestamp, pose, points, colors,
-                           conf, transform.valid_rows, model_ms, pre_ms)
+                           conf, transform.valid_rows, model_ms, pre_ms, **occ_times)

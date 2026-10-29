@@ -29,24 +29,41 @@ def run(args):
     if dataset_format == 'kitti':
         from .kitti import read_kitti
         frames = read_kitti(Path(args.input), args.max_frames)
+    elif dataset_format == 'waymo':
+        from .waymo import read_waymo
+        frames = read_waymo(args.input, args.max_frames, getattr(args, 'waymo_context', None))
     else:
         frames = read_tum(Path(args.input), args.fps, args.max_frames)
     if args.stress_seconds:
         frames = list(repeat_frames(frames, args.stress_seconds))
-    (out / "input.json").write_text(json.dumps([asdict(f) for f in frames], indent=2, default=str))
+    inputs = ([{"frame_id":f.frame_id,"timestamp":f.timestamp,"path":str(f.path),
+                "context":f.context,"cameras":[c.name for c in f.cameras]} for f in frames]
+              if dataset_format == 'waymo' else [asdict(f) for f in frames])
+    (out / "input.json").write_text(json.dumps(inputs, indent=2, default=str))
     viewer = None
     if args.viewer:
         from .viewer import MapViewer
         viewer = MapViewer(args.port, follow_camera=getattr(args, 'follow_camera', False),
                            render_size=(args.render_width,args.render_height),
                            input_label='Native KITTI cadence · all frames' if dataset_format == 'kitti' else f'{args.fps:g} Hz input')
-    backend = ABotStream(args.checkpoint, args.attention, max_frames=max(22000, len(frames)+64))
+    backend_options = {"max_frames":max(22000, len(frames)+64)}
+    if getattr(args, 'device', 'cuda') != 'cuda':
+        backend_options['device'] = args.device
+    occ_runtime = None
+    if getattr(args, 'occ_checkpoint', None):
+        from .occ_model import OccRuntime
+        occ_runtime = OccRuntime.from_checkpoints(args.occ_checkpoint, args.occ_adapter,
+                         getattr(args, 'device', 'cuda'), args.occ_mode)
+        backend_options['occ_runtime'] = occ_runtime
+    backend = ABotStream(args.checkpoint, args.attention, **backend_options)
+    execution_device = getattr(args, 'device', 'cuda')
+    cuda_active = execution_device.startswith('cuda') and getattr(backend.torch.cuda, 'is_available', lambda:False)()
     (out / "hardware.json").write_text(json.dumps({
         "hostname": __import__('socket').gethostname(),
         "cuda_visible_devices": os.environ.get('CUDA_VISIBLE_DEVICES'),
-        "gpu": backend.torch.cuda.get_device_name(0) if hasattr(backend.torch.cuda, 'get_device_name') else 'test',
+        "gpu": backend.torch.cuda.get_device_name(execution_device) if cuda_active else 'CPU',
         "torch": getattr(backend.torch, '__version__', 'test'),
-        "input_shape": [280, 504], "amp_dtype": "bf16",
+        "input_shape": [280, 504], "amp_dtype": str(getattr(backend.wrapper, 'compute_dtype', 'test')),
         "source_commit": "6e3b2e1257464a74dfceff22eb33190bd228276e",
     }, indent=2))
     # Kernel warm-up is untimed and MUST NOT seed the evaluated trajectory.
@@ -60,7 +77,8 @@ def run(args):
             initial_voxel = float(np.median(depth) / 150)
     del warm_result
     backend.reset()
-    backend.torch.cuda.reset_peak_memory_stats()
+    if cuda_active:
+        backend.torch.cuda.reset_peak_memory_stats(execution_device)
     if viewer and args.measure_browser:
         viewer.status.content = "Model ready. Waiting for browser…"
         viewer.wait_client()
@@ -105,6 +123,7 @@ def run(args):
                     viewer_done = time.perf_counter()
                     if args.measure_browser: viewer.request_ack(i, scheduled, acks)
                 row = {"frame_id": i, "timestamp": frame.timestamp, "model_ms": result.model_ms,
+                       "occ_predict_ms": result.occ_predict_ms, "occ_project_ms": result.occ_project_ms,
                        "preprocess_ms": result.preprocess_ms,
                        "inference_wall_ms": (inference_done-arrival)*1000,
                        "mapping_ms": (mapping_done-inference_done)*1000,
@@ -114,8 +133,8 @@ def run(args):
                        "server_latency_s": time.perf_counter() - scheduled,
                        "processing_ms": (time.perf_counter() - arrival) * 1000,
                        "backlog_frames": max(0, (arrival - scheduled) * source_fps),
-                       "gpu_allocated_mib": backend.torch.cuda.memory_allocated()/2**20,
-                       "gpu_reserved_mib": backend.torch.cuda.memory_reserved()/2**20,
+                       "gpu_allocated_mib": backend.torch.cuda.memory_allocated(execution_device)/2**20 if cuda_active else 0.,
+                       "gpu_reserved_mib": backend.torch.cuda.memory_reserved(execution_device)/2**20 if cuda_active else 0.,
                        "cpu_rss_mib": psutil.Process().memory_info().rss/2**20,
                        "map_points": len(voxel_map.cells)}
                 rows.append(row); log.write(json.dumps(row) + "\n")
@@ -143,14 +162,19 @@ def run(args):
         report = {"completed": completed, "error": error, "frames": len(rows), "expected_frames": len(frames),
                   "wall_seconds": time.perf_counter()-started, "target_fps": args.fps,
                   "dataset_format": dataset_format, "source_fps": source_fps,
-                  "sampling": "all native timestamps; no frames dropped" if dataset_format == 'kitti' else 'timestamp sampling',
+                  "sampling": "all native timestamps; no frames dropped" if dataset_format in ('kitti','waymo') else 'timestamp sampling',
+                  "occ": {"enabled":occ_runtime is not None,
+                          "mode":getattr(args,'occ_mode','predicted') if occ_runtime else None,
+                          "cameras":list(occ_runtime.source.cameras) if occ_runtime else [],
+                          "online_prediction_in_timing":bool(occ_runtime),
+                          "fusion_timing":"included in model_ms; no additional ABot forward"},
                   "attention_backend": backend.wrapper.attention_backend,
                   "scale": "uncalibrated", "warmup_frames_excluded": warm,
                   "synthetic_repeat_memory_test": bool(args.stress_seconds),
                   "model_ms": summary([r["model_ms"] for r in valid]),
                   "processing_ms": summary([r["processing_ms"] for r in valid]),
                   "stage_ms": {key: summary([r[key] for r in valid]) for key in
-                               ['preprocess_ms','inference_wall_ms','mapping_ms','storage_ms','viewer_update_ms','browser_backpressure_ms']},
+                               ['preprocess_ms','occ_predict_ms','occ_project_ms','inference_wall_ms','mapping_ms','storage_ms','viewer_update_ms','browser_backpressure_ms']},
                   "backlog_frames": summary([r["backlog_frames"] for r in valid]),
                   "cpu_rss_mib": summary([r["cpu_rss_mib"] for r in valid]),
                   "server_latency_s": summary([r["server_latency_s"] for r in valid]) if args.realtime else None,
@@ -160,7 +184,7 @@ def run(args):
                   "browser_ack_errors": [a for a in acks if "error" in a],
                   "native_cadence_realtime_pass": bool(browser_ok and args.realtime),
                   "realtime_pass": bool(browser_ok and args.realtime and source_fps >= 9.99),
-                  "peak_gpu_mib": backend.torch.cuda.max_memory_allocated()/2**20,
+                  "peak_gpu_mib": backend.torch.cuda.max_memory_allocated(execution_device)/2**20 if cuda_active else 0.,
                   "preview_points": len(xyz), "initial_voxel_model_units": initial_voxel,
                   "final_voxel_model_units": voxel_map.voxel,
                   "archived_map_chunks": len(chunks.entries) if chunks else 0}

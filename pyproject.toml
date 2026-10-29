@@ -14,6 +14,7 @@ dependencies = ["numpy==1.26.4", "scipy", "pillow", "viser==1.1.1", "opencv-pyth
 
 [project.optional-dependencies]
 analysis = ["matplotlib==3.10.8"]
+occ = ["torch==2.5.1", "safetensors>=0.4"]
 
 [project.urls]
 Repository = "https://github.com/CaMi1le/abot-realtime-map"
