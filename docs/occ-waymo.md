@@ -87,9 +87,10 @@ Boxes are not filled as dense OCC truth.
 
 Fusion training freezes OCC and all ABot parameters and optimizes only the
 adapter through the causal SDPA path. Its initial loss is scale-invariant sparse
-camera-z depth; it is not an object tracking loss. KV/camera state is detached
-between steps and reset at context/epoch boundaries. Validation is independent
-of the training optimizer. Checkpoints retain the source camera set, training and
+camera-z depth; it is not an object tracking loss. KV, reference-hidden and camera
+state are detached between steps and reset at context, timestamp-rewind and epoch
+boundaries. Validation starts with fresh state and is independent of the training
+optimizer. Checkpoints retain the source camera set, training and
 validation contexts and actual completed steps. Adapters are bound to the SHA256
 of the OCC checkpoint they were trained against. Runtime rejects untrained or
 incompatible checkpoints instead of using random weights as a useful prior.

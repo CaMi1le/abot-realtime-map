@@ -177,7 +177,7 @@ def depth_samples(root, row, frame, transform, device):
 
 
 def fusion_frame_loss(
-    backend, runtime, conditioner, item, carry=None, camera_state=None
+    backend, runtime, conditioner, item, carry=None, ref_hidden=None, camera_state=None
 ):
     from abot_recon.preprocessing import preprocess_image
     from abot_recon.modeling.streaming.core.cache_utils import detach_carry
@@ -201,6 +201,7 @@ def fusion_frame_loss(
             long_sequence_parallel=True,
             streaming_inference=True,
             past_key_values=carry,
+            ref_hidden=ref_hidden,
             camera_state=camera_state,
         )
     ids, target = depth_samples(root, row, frame, transform, backend.device)
@@ -223,7 +224,15 @@ def fusion_frame_loss(
             return type(value)(detached(v) for v in value)
         return value
 
-    return loss, next_carry, detached(pred.get("camera_state"))
+    next_ref_hidden = pred.get("ref_hidden")
+    if next_ref_hidden is None:
+        next_ref_hidden = ref_hidden
+    return (
+        loss,
+        next_carry,
+        detached(next_ref_hidden),
+        detached(pred.get("camera_state", camera_state)),
+    )
 
 
 def train_fusion(args, train, val):
@@ -245,7 +254,7 @@ def train_fusion(args, train, val):
     runtime = OccRuntime(source, adapter)
     optimizer = torch.optim.AdamW(adapter.parameters(), lr=args.lr)
     previous = None
-    carry = camera_state = None
+    carry = ref_hidden = camera_state = None
     try:
         for step in range(args.steps):
             item = train[step % len(train)]
@@ -256,9 +265,12 @@ def train_fusion(args, train, val):
                 or frame.timestamp <= previous.timestamp
             ):
                 backend.reset()
-                carry = camera_state = None
-            loss, carry, camera_state = fusion_frame_loss(
-                backend, runtime, conditioner, item, carry, camera_state
+                carry = ref_hidden = camera_state = None
+            loss, carry, ref_hidden, camera_state = fusion_frame_loss(
+                backend, runtime, conditioner, item,
+                carry=carry,
+                ref_hidden=ref_hidden,
+                camera_state=camera_state,
             )
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
@@ -277,15 +289,22 @@ def train_fusion(args, train, val):
             )
         adapter.eval()
         scores = []
-        previous, carry, camera_state = None, None, None
+        previous, carry, ref_hidden, camera_state = None, None, None, None
         with torch.no_grad():
             for item in val:
                 frame = item[0]
-                if previous is None or previous.context != frame.context:
+                if (
+                    previous is None
+                    or previous.context != frame.context
+                    or frame.timestamp <= previous.timestamp
+                ):
                     backend.reset()
-                    carry = camera_state = None
-                loss, carry, camera_state = fusion_frame_loss(
-                    backend, runtime, conditioner, item, carry, camera_state
+                    carry = ref_hidden = camera_state = None
+                loss, carry, ref_hidden, camera_state = fusion_frame_loss(
+                    backend, runtime, conditioner, item,
+                    carry=carry,
+                    ref_hidden=ref_hidden,
+                    camera_state=camera_state,
                 )
                 scores.append(float(loss))
                 previous = frame
