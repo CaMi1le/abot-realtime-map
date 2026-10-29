@@ -1,5 +1,15 @@
 # ABot Realtime Map
 
+Experimental **predicted OCC → ABot internal token conditioning** is documented in
+[the Waymo integration guide](docs/occ-waymo.md). It includes independent one/three-camera
+OCC training, a frozen-backbone adapter, causal ablations and matched latency reporting;
+trained Waymo weights and improved quality/realtime performance are not yet established.
+
+The joint training entrypoint `python -m realtime_map.occ_joint_training` trains
+the three-camera OCC source and token adapter together through frozen ABot.
+It includes differentiable voxel projection, causal clips, checkpoint resume and
+matching inference exports. See [joint training commands](docs/occ-waymo.md#joint-training-with-the-front-three-cameras).
+
 Streaming monocular 3D mapping experiments with [ABot-Recon](https://github.com/amap-cvlab/ABot-Recon), featuring live point-cloud visualization, timestamped replay, and indoor/driving benchmarks.
 
 This is an independent research project built on AMAP CV Lab's ABot-Recon. The upstream model provides geometry and camera poses; this repository adds a frame-at-a-time adapter, bounded map previews, archival, browser measurements, and evaluation tools.
@@ -121,6 +131,46 @@ Review the [KITTI terms](https://www.cvlibs.net/datasets/kitti/) before download
 ```
 
 The live chase view displays the **current 100-frame chunk**, replacing the previous chunk at each boundary (about 10.4 seconds on these sequences). Background points can disappear during this reset even though earlier chunks remain on disk. The saved viewer offers current-chunk, neighboring-chunk, and whole-route views. Whole-route maps are coarser bounded previews.
+
+### Inspect driving detail before voxel merging
+
+For a close-range driving comparison, use one continuous Waymo context with parked
+cars, curbs and building fronts. Keep original camera aspect ratios and inspect
+single-frame predictions before the route overview. The current ABot adapter
+always predicts 504×280: KITTI 05 has only 504×152 valid rows after aspect-preserving
+resize and padding, while native 1920×1280 Waymo fills the 504×280 crop. Higher
+source resolution alone does not raise the model's output resolution.
+
+The workspace helper below reuses `../reconstruction/scripts/waymo_numpy_adapter.py`
+(or an explicit `--decoder` path). It reads a bounded source prefix using existing
+Waymo dataset authorization, checks every TFRecord CRC32C, and retains original
+front-three JPEGs, fixed calibration and source provenance. It never joins contexts.
+Only FRONT enters this baseline inference; world poses remain offline metadata.
+
+```bash
+.venv-occ/bin/python scripts/prepare-waymo-preview.py \
+  --source gs://waymo_open_dataset_v_1_4_3/individual_files/training/segment-9653249092275997647_980_000_1000_000_with_camera_labels.tfrecord \
+  --generation 1709065432924761 --frames 20 \
+  --output data/waymo-detail/front-context-9653249092275997647
+
+.venv-occ/bin/python -m realtime_map.cli \
+  --input data/waymo-detail/front-context-9653249092275997647 --dataset-format waymo \
+  --output artifacts/waymo-detail/front-20-baseline --device cpu --attention sdpa \
+  --point-stride 1 --max-points 1000000 --chunk-frames 5
+
+.venv-occ/bin/python scripts/view-dense.py artifacts/waymo-detail/front-20-baseline --port 8893
+```
+
+Use the existing inference environment in place of `.venv-occ` if appropriate.
+This CPU run is for offline visual inspection and establishes no realtime result.
+The viewer reads `frames/*.npz` directly and offers a trailing window, confidence,
+range, pixel stride and point diameter controls. It does not voxelize the dense
+view. The range control uses uncalibrated model units relative to first-frame
+median depth. A smaller point diameter changes appearance, not predicted detail;
+several accumulated frames can duplicate moving vehicles. Compare stride 1 and 4
+with the same frame, camera, confidence and depth range. Dense inspection costs
+more mapping, storage and rendering time than the measured driving profile, so
+it is not the default online profile.
 
 ## Browser measurement and recording
 

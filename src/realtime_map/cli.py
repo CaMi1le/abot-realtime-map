@@ -6,7 +6,12 @@ import argparse
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--input", required=True)
-    p.add_argument("--dataset-format", choices=["tum", "kitti"], default="tum")
+    p.add_argument("--dataset-format", choices=["tum", "kitti", "waymo"], default="tum")
+    p.add_argument("--waymo-context", help="One official Waymo context; state never crosses contexts")
+    p.add_argument("--device", default="cuda")
+    p.add_argument("--occ-checkpoint", help="Trained Waymo OCC predictor checkpoint")
+    p.add_argument("--occ-adapter", help="Trained OCC-to-ABot adapter checkpoint")
+    p.add_argument("--occ-mode", choices=["predicted", "zero", "shuffle"], default="predicted")
     p.add_argument("--output", required=True)
     p.add_argument("--checkpoint", default="models/abot_recon.safetensors")
     p.add_argument("--fps", type=float, default=10)
@@ -29,6 +34,14 @@ def main():
     p.add_argument("--loop", action="store_true")
     p.add_argument("--stress-seconds", type=float)
     a = p.parse_args()
+    if bool(a.occ_checkpoint) != bool(a.occ_adapter):
+        p.error("OCC prediction and adapter checkpoints must be supplied together")
+    if a.occ_checkpoint and (a.dataset_format != 'waymo' or a.loop or a.stress_seconds):
+        p.error("OCC conditioning requires Waymo and a causal stream without offline loop or synthetic repetition")
+    if not a.occ_checkpoint and a.occ_mode != 'predicted':
+        p.error("OCC ablations require both OCC checkpoints")
+    if a.dataset_format == 'waymo' and (a.loop or a.stress_seconds):
+        p.error("Waymo runs must preserve independent contexts and original sensor timing")
     if a.fps <= 0 or a.point_stride <= 0 or a.voxel < 0 or a.max_points <= 0:
         p.error("fps, point stride and point budget must be positive; voxel must be nonnegative")
     if a.max_points > 1_000_000: p.error("Preview point budget cannot exceed one million")
