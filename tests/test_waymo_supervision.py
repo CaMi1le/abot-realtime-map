@@ -5,6 +5,7 @@ import copy
 import hashlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -95,6 +96,56 @@ def test_native_export_loads_fixed_calibration_and_measured_rays(tmp_path, monke
     assert source.read_bytes() == b"immutable-source"
     with pytest.raises(FileExistsError):
         exporter.export_source(source, output, Path(__file__))
+
+
+def test_exported_scene_supports_waymo_trajectory_and_depth_evaluation(tmp_path, monkeypatch):
+    pytest.importorskip("torch")
+    from realtime_map.waymo_evaluation import evaluate_waymo
+
+    frames, camera_poses = [], []
+    for index, offset in enumerate(([0, 0, 0], [1, 0, 0], [1, 1, 0])):
+        frame = source_frame()
+        frame["timestamp_micros"] += index * 100000
+        frame["pose"][:3, 3] += offset
+        for image in frame["images"].values():
+            image["pose"] = frame["pose"].copy()
+        camera_poses.append(
+            frame["images"][1]["pose"]
+            @ frame["cameras"][1]["extrinsic"]
+            @ WAYMO_FROM_CV
+        )
+        frames.append(frame)
+    mock_decoder(monkeypatch, frames)
+    source = tmp_path / "source.tfrecord"
+    source.write_bytes(b"immutable-source")
+    scene = tmp_path / "prepared"
+    manifest = exporter.export_source(source, scene, Path(__file__), len(frames))
+    assert all("source_world_from_camera" in row["sensors"]["FRONT"]
+               for row in manifest["frames"])
+
+    run = tmp_path / "run"
+    (run / "frames").mkdir(parents=True)
+    poses = np.stack(camera_poses)
+    poses[:, :3, 3] /= 2
+    np.save(run / "poses.npy", poses)
+    inputs = []
+    for index, frame in enumerate(frames):
+        inputs.append({"context": frame["context"],
+                       "timestamp": frame["timestamp_micros"] / 1e6})
+        points = np.zeros((12, 16, 3), dtype=np.float32)
+        points[..., 2] = 2
+        np.savez(run / "frames" / f"{index:06d}.npz",
+                 points=points, confidence=np.ones((12, 16), dtype=np.float32))
+    (run / "input.json").write_text(json.dumps(inputs))
+
+    result = evaluate_waymo(run, scene)
+    assert result["trajectory_available"] and result["depth_available"]
+    assert result["alignment_scale"] == pytest.approx(2)
+    assert result["ate_rmse_m"] == pytest.approx(0, abs=1e-10)
+    assert result["depth_samples"] == 6
+    # Each frame has measured depths 3 and 4; aligned predicted depths are both 4.
+    assert result["depth_rmse_m"] == pytest.approx(np.sqrt(0.5))
+    assert result["depth_abs_rel"] == pytest.approx(1 / 6)
 
 
 @pytest.mark.parametrize(

@@ -34,7 +34,7 @@ def evaluate_waymo(run, scene):
     gt = np.array(
         [
             np.asarray(
-                rows[f.timestamp_us]["sensors"]["FRONT"]["shared_world_from_camera"]
+                rows[f.timestamp_us]["sensors"]["FRONT"]["source_world_from_camera"]
             ).reshape(4, 4)
             @ WAYMO_FROM_CV
             for f in matched
